@@ -24,6 +24,6 @@
 
 - make start
 
-- сслыка на домен:
+# Демонстрация:
 
 [Page Analyzer](https://php-project-9-production-84d8.up.railway.app/)
