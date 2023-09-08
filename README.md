@@ -26,4 +26,4 @@
 
 - сслыка на домен:
 
-https://php-project-9-production-84d8.up.railway.app/
+[Page Analyzer](https://php-project-9-production-84d8.up.railway.app/)
