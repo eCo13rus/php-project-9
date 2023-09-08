@@ -3,7 +3,8 @@
 [![my-check CI](https://github.com/eCo13rus/php-project-9/actions/workflows/my-check.yml/badge.svg)](https://github.com/eCo13rus/php-project-9/actions)
 
 # Project Description:
-- Page analyzer
+
+## Page analyzer
 
 ## Requirements installation:
 
@@ -18,6 +19,10 @@
 - cd php-project-9
 
 - make install
+
+# Start 
+
+- make start
 
 - сслыка на домен:
 
