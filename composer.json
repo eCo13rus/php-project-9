@@ -1,0 +1,18 @@
+{
+    "name": "hexlet/code",
+    "description": "php-project-9",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ilya Shirokov",
+            "email": "asd.mat@mail.ru"
+        }
+    ],
+    "require": {
+
+    },
+    "require-dev": {
+
+    }
+}
