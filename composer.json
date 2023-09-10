@@ -3,6 +3,11 @@
     "description": "php-project-9",
     "type": "project",
     "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Hexlet\\Code\\": "app/"
+        }
+    },
     "authors": [
         {
             "name": "Ilya Shirokov",
@@ -16,7 +21,10 @@
         "slim/php-view": "^3.2",
         "php-di/php-di": "^7.0",
         "slim/flash": "^0.4.0",
-        "twbs/bootstrap": "^5.0.2"
+        "twbs/bootstrap": "^5.0.2",
+        "nesbot/carbon": "^2.16",
+        "vlucas/valitron": "^1.4",
+        "imangazaliev/didom": "^2.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.6"
