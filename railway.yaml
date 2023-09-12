@@ -1,0 +1,5 @@
+environments:
+    production:
+        variables:
+            APP_ENV: 'production'
+            DATABASE_URL: 'postgresql://eco13:Horror4199@localhost:5432/hexlet_production'
