@@ -53,7 +53,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
     // Получение URL из запроса
     $urlData = $request->getParsedBodyParam('url');
-    
+
     // Проверка на пустой URL
     if (empty($urlData['name'])) {
         $params = [
@@ -117,7 +117,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
 
 
-// Маршрут для отображение списка всех URL-адресов 
+// Маршрут для отображение списка всех URL-адресов
 $app->get('/urls', function ($request, $response) {
     $db = $this->get('db');
 
