@@ -2,3 +2,4 @@
 .env
 database.ini
 error.log
+railway.yaml
