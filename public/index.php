@@ -122,6 +122,9 @@ $app->get('/urls', function ($request, $response) {
     $db = $this->get('db');
 
     try {
+        // SQL-запрос для получения данных URL и последней проверки (если она была проведена)
+        // Используется LEFT JOIN для объединения таблиц urls и url_checks по полю id/ url_id
+        // Используется функция MAX для получения последней даты проверки
         $sql = "
             SELECT urls.name, urls.id, MAX(url_checks.created_at) AS created_at, url_checks.status_code 
             FROM urls 
@@ -131,34 +134,43 @@ $app->get('/urls', function ($request, $response) {
         ";
         $statement = $db->query($sql);
 
+        // Получение всех данных из базы данных
         $urlsData = $statement->fetchAll();
     } catch (PDOException $e) {
+        // Логирование ошибки в случае неудачи
         error_log($e->getMessage());
 
+        // Подготовка параметров с сообщением об ошибке для отображения пользователю
         $params = ['error' => 'Не удалось получить данные о URL.'];
         return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
     }
 
+    // Подготовка параметров для отображения: либо данные URL, либо сообщение о том, что данных нет
     $params = $urlsData ? ['urls' => $urlsData] : ['message' => 'Нет данных для отображения'];
 
+    // Рендеринг шаблона с передачей подготовленных параметров
     return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
 })->setName('urls');
 
 
 
-$app->get('/urls/{id}', function ($request, $res, array $args) {
+
+
+$app->get('/urls/{id}', function ($req, $res, array $args) {
     $id = $args['id'];
     $db = $this->get('db');
 
-    $statement = $db->prepare("SELECT * FROM urls WHERE id = :id;");
-    $statement->bindValue(':id', $id, \PDO::PARAM_INT);
-    $statement->execute();
+    $statement = $db->query("SELECT * FROM urls WHERE id = $id;");
     $url = $statement->fetch();
+
+    $statement = $db->query("SELECT * FROM url_checks WHERE url_id = $id ORDER BY id DESC;");
+    $urlChecks = $statement->fetchAll();
 
     $messages = $this->get('flash')->getMessages();
     $params = [
         'url' => $url,
         'flash' => $messages,
+        'checks' => $urlChecks
     ];
 
     return $this->get('renderer')->render($res, 'urls/show.phtml', $params);
