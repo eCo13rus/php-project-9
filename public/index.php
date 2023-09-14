@@ -224,7 +224,7 @@ $app->post('/urls/{url_id}/checks', function ($req, $res, array $args) use ($rou
         $document = new Document($body);
         $h1 = $document->has('h1') ? optional($document->find('h1')[0])->text() : null;
         $title = $document->has('title') ? optional($document->find('title')[0])->text() : null;
-        $description = $document->has('meta[name=description]') ? 
+        $description = $document->has('meta[name=description]') ?
         optional($document->find('meta[name=description]')[0])
         ->attr('content') : null;
 
