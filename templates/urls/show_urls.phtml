@@ -43,30 +43,31 @@
 
             <?php if (isset($urls) && count($urls) > 0): ?>
                 <table class="table table-bordered table-hover text-nowrap" data-test="urls">
-                    <tbody>
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Имя</th>
                             <th>Последняя проверка</th>
                             <th>Код ответа</th>
                         </tr>
+                    </thead>
+                    <tbody>
                         <?php foreach($urls as $url): ?>
                         <tr>
-                            <td><?= $url['id'] ?></td>
+                            <td><?= htmlspecialchars($url['id']) ?></td>
                             <td>
-                                <a href="/urls/<?= $url['id'] ?>"><?= $url['name'] ?></a>
+                                <a href="/urls/<?= htmlspecialchars($url['id']) ?>"><?= htmlspecialchars($url['name']) ?></a>
                             </td>
-                            <td><?= $url['created_at'] ?></td>
-                            <td><?= $url['status_code'] ?></td>
+                            <td><?= htmlspecialchars($url['created_at']) ?></td>
+                            <td><?= htmlspecialchars($url['status_code']) ?></td>
                         </tr>
-                        <?php endforeach ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
-            <?php else: ?>
-                <p>Нет данных для отображения.</p>
             <?php endif; ?>
         </div>
     </main>
+
 
     <footer class="border-top py-3 mt-5 flex-shrink-0">
         <div class="container-lg">

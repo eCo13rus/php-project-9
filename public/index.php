@@ -155,25 +155,79 @@ $app->get('/urls', function ($request, $response) {
 
 
 
-
-$app->get('/urls/{id}', function ($req, $res, array $args) {
+/**
+ * Обработчик маршрута для отображения детальной информации о URL по его ID.
+ * Маршрут принимает ID URL как параметр и извлекает соответствующую информацию из базы данных.
+ * Также извлекаются все связанные проверки URL и текущие флэш-сообщения для передачи в шаблон.
+ */
+$app->get('/urls/{id}', function ($request, $response, array $args) {
+    // Получаем ID URL из параметров маршрута
     $id = $args['id'];
+
+    // Получаем объект базы данных из контейнера зависимостей
     $db = $this->get('db');
 
+    // Формируем и выполняем SQL-запрос для получения информации о URL по ID
+    // ПРИМЕЧАНИЕ: Этот код подвержен SQL-инъекциям, нужно использовать подготовленные запросы для защиты от них
     $statement = $db->query("SELECT * FROM urls WHERE id = $id;");
     $url = $statement->fetch();
 
+    // Формируем и выполняем SQL-запрос для получения всех проверок URL по ID
+    // ПРИМЕЧАНИЕ: Этот код подвержен SQL-инъекциям, нужно использовать подготовленные запросы для защиты от них
     $statement = $db->query("SELECT * FROM url_checks WHERE url_id = $id ORDER BY id DESC;");
     $urlChecks = $statement->fetchAll();
 
+    // Получаем флэш-сообщения для отображения пользователю
     $messages = $this->get('flash')->getMessages();
+
+    // Формируем параметры для передачи в шаблон
     $params = [
         'url' => $url,
         'flash' => $messages,
         'checks' => $urlChecks
     ];
 
-    return $this->get('renderer')->render($res, 'urls/show.phtml', $params);
-})->setName('url');
+    // Рендерим шаблон с передачей параметров и возвращаем результат как ответ
+    return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
+})->setName('url'); // Устанавливаем имя маршрута
+
+
+
+
+// Обработчик POST-запроса для создания новой проверки URL.
+$app->post('/urls/{url_id}/checks', function ( $request,  $response, array $args) use ($router) {
+    // Получаем ID URL из параметров маршрута
+    $id = $args['url_id'];
+
+    // Получаем объект базы данных из контейнера зависимостей
+    $db = $this->get('db');
+
+    // Подготавливаем SQL-запрос для добавления новой проверки URL
+    $sql = "INSERT INTO url_checks (url_id, created_at) VALUES (:url_id, :created_at)";
+    $sqlReqvest = $db->prepare($sql);
+
+    try {
+        // Пытаемся выполнить SQL-запрос с текущей датой и временем
+        $sqlReqvest->execute([
+            'url_id' => $id,
+            'created_at' => Carbon::now()->toDateTimeString()
+        ]);
+
+        // Добавляем флэш-сообщение об успешной проверке
+        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
+    } catch (Exception $e) {
+        // Логируем ошибку и добавляем флэш-сообщение об ошибке
+        error_log($e->getMessage());
+        $this->get('flash')->addMessage('error', 'Произошла ошибка при создании проверки');
+    }
+
+    // Формируем URL для редиректа и перенаправляем пользователя на страницу URL
+    $urlRout = $router->urlFor('url', ['id' => $id]);
+    return $response->withRedirect($urlRout);
+})->setName('url_check_create');
+
+
+
+
 
 $app->run();
