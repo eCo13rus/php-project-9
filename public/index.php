@@ -195,7 +195,7 @@ $app->get('/urls/{id}', function ($request, $response, array $args) {
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
-$app->post('/urls/{url_id}/checks', function ( $request,  $response, array $args) use ($router) {
+$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($router) {
     // Получаем ID URL из параметров маршрута
     $id = $args['url_id'];
 
