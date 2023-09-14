@@ -10,6 +10,9 @@ use Hexlet\Code\Connection;
 use Hexlet\Code\DbRepository;
 use Valitron\Validator;
 use Carbon\Carbon;
+use DiDom\Document;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 session_start();
 
@@ -195,39 +198,60 @@ $app->get('/urls/{id}', function ($request, $response, array $args) {
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
-$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($router) {
-    // Получаем ID URL из параметров маршрута
-    $id = $args['url_id'];
-
-    // Получаем объект базы данных из контейнера зависимостей
+$app->post('/urls/{url_id}/checks', function ($req, $res, array $args) use ($router) {
+    $id = (int)$args['url_id'];
     $db = $this->get('db');
 
-    // Подготавливаем SQL-запрос для добавления новой проверки URL
-    $sql = "INSERT INTO url_checks (url_id, created_at) VALUES (:url_id, :created_at)";
-    $sqlReqvest = $db->prepare($sql);
+    $statement = $db->prepare("SELECT name FROM urls WHERE id = :id");
+    $statement->execute(['id' => $id]);
+    $urlName = $statement->fetch(\PDO::FETCH_COLUMN);
 
-    try {
-        // Пытаемся выполнить SQL-запрос с текущей датой и временем
-        $sqlReqvest->execute([
-            'url_id' => $id,
-            'created_at' => Carbon::now()->toDateTimeString()
-        ]);
-
-        // Добавляем флэш-сообщение об успешной проверке
-        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
-    } catch (Exception $e) {
-        // Логируем ошибку и добавляем флэш-сообщение об ошибке
-        error_log($e->getMessage());
-        $this->get('flash')->addMessage('error', 'Произошла ошибка при создании проверки');
+    if (!$urlName) {
+        $this->get('flash')->addMessage('error', 'URL не найден');
+        return $res->withRedirect($router->urlFor('urls'));
     }
 
-    // Формируем URL для редиректа и перенаправляем пользователя на страницу URL
-    $urlRout = $router->urlFor('url', ['id' => $id]);
-    return $response->withRedirect($urlRout);
+    $sql = "INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) 
+            VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)";
+    $sqlRequest = $db->prepare($sql);
+
+    try {
+        $client = new Client();
+        $response = $client->request('GET', $urlName);
+        $statusCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        $document = new Document($body);
+        $h1 = $document->has('h1') ? optional($document->find('h1')[0])->text() : null;
+        $title = $document->has('title') ? optional($document->find('title')[0])->text() : null;
+        $description = $document->has('meta[name=description]') ? 
+        optional($document->find('meta[name=description]')[0])
+        ->attr('content') : null;
+
+
+        $h1 = $h1 !== null ? mb_substr($h1, 0, 255) : null;
+        $title = $title !== null ? mb_substr($title, 0, 255) : null;
+        $description = $description !== null ? mb_substr($description, 0, 255) : null;
+
+        $sqlRequest->execute([
+            'url_id' => $id,
+            'status_code' => $statusCode,
+            'h1' => $h1,
+            'title' => $title,
+            'description' => $description,
+            'created_at' => Carbon::now()->toDateTimeString(),
+        ]);
+
+        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
+    } catch (RequestException $e) {
+        $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
+        return $res->withRedirect($router->urlFor('url', ['id' => $id]));
+    } catch (Exception $e) {
+        $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
+    }
+
+    return $res->withRedirect($router->urlFor('url', ['id' => $id]));
 })->setName('url_check_create');
-
-
-
 
 
 $app->run();
