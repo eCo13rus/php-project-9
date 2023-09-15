@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/helpers.php';
 
 use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
@@ -198,20 +199,10 @@ $app->get('/urls/{id}', function ($request, $response, array $args) {
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
-function getTagContent(Document $document, string $tag, string $attribute = null): ?string
-{
-    $element = $document->has($tag) ? $document->find($tag)[0] : null;
-    if ($element) {
-        $content = $attribute ? optional($element)->attr($attribute) : optional($element)->text();
-        return mb_substr($content, 0, 255);
-    }
-    return null;
-}
-
 $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($router) {
     // Получаем ID URL из параметров маршрута
     $id = (int)$args['url_id'];
-    
+
     // Получаем объект PDO для взаимодействия с БД
     $db = $this->get('db');
 
@@ -235,7 +226,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         // Создаем новый HTTP клиент и отправляем GET запрос к URL для получения содержимого страницы
         $client = new Client();
         $httpResponse  = $client->request('GET', $urlName);
-        
+
         // Получаем HTTP статус код ответа и тело ответа
         $statusCode = $httpResponse ->getStatusCode();
         $body = (string)$httpResponse ->getBody();
