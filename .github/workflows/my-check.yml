@@ -1,13 +1,12 @@
+name: my-check CI
+
+on:
+  - push
+
 jobs:
   build:
-    runs-on: ubuntu-22.04
 
-    env: 
-      PGUSER: ${{ secrets.PGUSER }}
-      PGPASSWORD: ${{ secrets.PGPASSWORD }}
-      PGHOST: ${{ secrets.PGHOST }}
-      PGPORT: ${{ secrets.PGPORT }}
-      PGDATABASE: ${{ secrets.PGDATABASE }}
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v3
