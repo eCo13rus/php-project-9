@@ -41,7 +41,9 @@ final class Connection
 
             // Создаем объект PDO для подключения к БД
             $pdo = new \PDO($conStr, $username, $password);
+            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             return $pdo;
+
 
         } catch (\Exception $e) {
             error_log($e->getMessage());
