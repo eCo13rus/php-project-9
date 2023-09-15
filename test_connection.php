@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php'; // путь должен вести к вашему автозагрузчику composer
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Hexlet\Code\Connection;
 
