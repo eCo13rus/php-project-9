@@ -7,7 +7,7 @@ use Slim\Views\PhpRenderer;
 use Slim\Flash\Messages;
 use DI\Container;
 use Hexlet\Code\Connection;
-use Hexlet\Code\DbRepository;
+use Hexlet\Code\DbTableCreator ;
 use Valitron\Validator;
 use Carbon\Carbon;
 use DiDom\Document;
@@ -20,6 +20,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 $container = new Container();
 
+// Регистрация сервисов
 $container->set('renderer', function () {
     return new PhpRenderer(__DIR__ . '/../templates');
 });
@@ -33,13 +34,12 @@ $container->set('db', function () {
 });
 
 
-
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
 $router = $app->getRouteCollector()->getRouteParser();
 
-DbRepository::createTable($container->get('db'));
+DbTableCreator::createTables($container->get('db'));
 
 // Главная
 $app->get('/', function ($requestuest, $response) {
@@ -198,41 +198,55 @@ $app->get('/urls/{id}', function ($request, $response, array $args) {
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
-$app->post('/urls/{url_id}/checks', function ($req, $res, array $args) use ($router) {
+function getTagContent(Document $document, string $tag, string $attribute = null): ?string
+{
+    $element = $document->has($tag) ? $document->find($tag)[0] : null;
+    if ($element) {
+        $content = $attribute ? optional($element)->attr($attribute) : optional($element)->text();
+        return mb_substr($content, 0, 255);
+    }
+    return null;
+}
+
+$app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($router) {
+    // Получаем ID URL из параметров маршрута
     $id = (int)$args['url_id'];
+    
+    // Получаем объект PDO для взаимодействия с БД
     $db = $this->get('db');
 
+    // Подготавливаем и выполняем запрос для получения имени URL по ID
     $statement = $db->prepare("SELECT name FROM urls WHERE id = :id");
     $statement->execute(['id' => $id]);
     $urlName = $statement->fetch(\PDO::FETCH_COLUMN);
 
+    // Если URL не найден, отправляем сообщение об ошибке и перенаправляем пользователя
     if (!$urlName) {
         $this->get('flash')->addMessage('error', 'URL не найден');
-        return $res->withRedirect($router->urlFor('urls'));
+        return $response->withRedirect($router->urlFor('urls'));
     }
 
+    // Подготавливаем SQL запрос для вставки данных проверки в БД
     $sql = "INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) 
             VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)";
     $sqlRequest = $db->prepare($sql);
 
     try {
+        // Создаем новый HTTP клиент и отправляем GET запрос к URL для получения содержимого страницы
         $client = new Client();
-        $response = $client->request('GET', $urlName);
-        $statusCode = $response->getStatusCode();
-        $body = (string)$response->getBody();
+        $httpResponse  = $client->request('GET', $urlName);
+        
+        // Получаем HTTP статус код ответа и тело ответа
+        $statusCode = $httpResponse ->getStatusCode();
+        $body = (string)$httpResponse ->getBody();
 
+        // Парсим тело ответа для извлечения данных SEO анализа
         $document = new Document($body);
-        $h1 = $document->has('h1') ? optional($document->find('h1')[0])->text() : null;
-        $title = $document->has('title') ? optional($document->find('title')[0])->text() : null;
-        $description = $document->has('meta[name=description]') ?
-        optional($document->find('meta[name=description]')[0])
-        ->attr('content') : null;
+        $h1 = getTagContent($document, 'h1');
+        $title = getTagContent($document, 'title');
+        $description = getTagContent($document, 'meta[name=description]', 'content');
 
-
-        $h1 = $h1 !== null ? mb_substr($h1, 0, 255) : null;
-        $title = $title !== null ? mb_substr($title, 0, 255) : null;
-        $description = $description !== null ? mb_substr($description, 0, 255) : null;
-
+        // Выполняем SQL запрос для сохранения данных проверки в БД
         $sqlRequest->execute([
             'url_id' => $id,
             'status_code' => $statusCode,
@@ -242,15 +256,19 @@ $app->post('/urls/{url_id}/checks', function ($req, $res, array $args) use ($rou
             'created_at' => Carbon::now()->toDateTimeString(),
         ]);
 
+        // Сообщаем пользователю об успешной проверке
         $this->get('flash')->addMessage('success', 'Страница успешно проверена');
     } catch (RequestException $e) {
+        // Обрабатываем исключения, возникшие при отправке HTTP запроса
         $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
-        return $res->withRedirect($router->urlFor('url', ['id' => $id]));
+        return $response->withRedirect($router->urlFor('url', ['id' => $id]));
     } catch (Exception $e) {
+        // Обрабатываем все остальные исключения
         $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
     }
 
-    return $res->withRedirect($router->urlFor('url', ['id' => $id]));
+    // Перенаправляем пользователя на страницу с деталями URL после завершения проверки
+    return $response->withRedirect($router->urlFor('url', ['id' => $id]));
 })->setName('url_check_create');
 
 
