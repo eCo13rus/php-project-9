@@ -11,5 +11,5 @@ lint:
 
 push:
 	git add .
-	git commit -m 'update'
+	git commit -m 'fix'
 	git push origin main

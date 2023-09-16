@@ -258,12 +258,12 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         $this->get('flash')->addMessage('success', 'Страница успешно проверена');
     } catch (RequestException $e) {
         $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
-        return $response->withRedirect($router->urlFor('url', ['id' => $id]));
+        return $response->withRedirect($router->urlFor('url', ['id' => (string) $id]));
     } catch (Exception $e) {
         $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
     }
     // Перенаправляем пользователя на страницу с деталями URL после завершения проверки
-    return $response->withRedirect($router->urlFor('url', ['id' => $id]));
+    return $response->withRedirect($router->urlFor('url', ['id' => (string) $id]));
 })->setName('url_check_create');
 
 $app->run();
