@@ -34,7 +34,7 @@ $container->set('db', function () {
     return Connection::connect();
 });
 
-
+// Создание приложения
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
@@ -43,7 +43,7 @@ $router = $app->getRouteCollector()->getRouteParser();
 DbTableCreator::createTables($container->get('db'));
 
 // Главная
-$app->get('/', function ($requestuest, $response) {
+$app->get('/', function ($request, $response) {
     $url = '';
     return $this->get('renderer')->render($response, 'index.phtml', ['url' => $url]);
 })->setName('main');
@@ -128,7 +128,6 @@ $app->get('/urls', function ($request, $response) {
     try {
         // SQL-запрос для получения данных URL и последней проверки (если она была проведена)
         // Используется LEFT JOIN для объединения таблиц urls и url_checks по полю id/ url_id
-        // Используется функция MAX для получения последней даты проверки
         $sql = "
             SELECT urls.name, urls.id, MAX(url_checks.created_at) AS created_at, url_checks.status_code 
             FROM urls 
@@ -158,28 +157,27 @@ $app->get('/urls', function ($request, $response) {
 
 
 
-
-/**
- * Обработчик маршрута для отображения детальной информации о URL по его ID.
- * Маршрут принимает ID URL как параметр и извлекает соответствующую информацию из базы данных.
- * Также извлекаются все связанные проверки URL и текущие флэш-сообщения для передачи в шаблон.
- */
+// Обработчик маршрута для отображения детальной информации о URL по его ID.
 $app->get('/urls/{id}', function ($request, $response, array $args) {
-    // Получаем ID URL из параметров маршрута
-    $id = $args['id'];
-
-    // Получаем объект базы данных из контейнера зависимостей
+    $id = (int)$args['id']; // Убедимся, что ID является целым числом
     $db = $this->get('db');
 
-    // Формируем и выполняем SQL-запрос для получения информации о URL по ID
-    // ПРИМЕЧАНИЕ: Этот код подвержен SQL-инъекциям, нужно использовать подготовленные запросы для защиты от них
-    $statement = $db->query("SELECT * FROM urls WHERE id = $id;");
-    $url = $statement->fetch();
+    try {
+        // Подготовка и выполнение запроса для получения информации о URL по ID
+        $stmt = $db->prepare('SELECT * FROM urls WHERE id = :id');
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $url = $stmt->fetch();
 
-    // Формируем и выполняем SQL-запрос для получения всех проверок URL по ID
-    // ПРИМЕЧАНИЕ: Этот код подвержен SQL-инъекциям, нужно использовать подготовленные запросы для защиты от них
-    $statement = $db->query("SELECT * FROM url_checks WHERE url_id = $id ORDER BY id DESC;");
-    $urlChecks = $statement->fetchAll();
+        // Подготовка и выполнение запроса для получения всех проверок URL по ID
+        $stmt = $db->prepare('SELECT * FROM url_checks WHERE url_id = :url_id ORDER BY id DESC');
+        $stmt->bindParam(':url_id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $urlChecks = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log($e->getMessage());
+        throw new Exception('Ошибка при работе с базой данных');
+    }
 
     // Получаем флэш-сообщения для отображения пользователю
     $messages = $this->get('flash')->getMessages();
@@ -190,16 +188,16 @@ $app->get('/urls/{id}', function ($request, $response, array $args) {
         'flash' => $messages,
         'checks' => $urlChecks
     ];
-
-    // Рендерим шаблон с передачей параметров и возвращаем результат как ответ
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
-})->setName('url'); // Устанавливаем имя маршрута
+})->setName('url');
+
 
 
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
 $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($router) {
+
     // Получаем ID URL из параметров маршрута
     $id = (int)$args['url_id'];
 
@@ -247,20 +245,15 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             'created_at' => Carbon::now()->toDateTimeString(),
         ]);
 
-        // Сообщаем пользователю об успешной проверке
         $this->get('flash')->addMessage('success', 'Страница успешно проверена');
     } catch (RequestException $e) {
-        // Обрабатываем исключения, возникшие при отправке HTTP запроса
         $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
         return $response->withRedirect($router->urlFor('url', ['id' => $id]));
     } catch (Exception $e) {
-        // Обрабатываем все остальные исключения
         $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
     }
-
     // Перенаправляем пользователя на страницу с деталями URL после завершения проверки
     return $response->withRedirect($router->urlFor('url', ['id' => $id]));
 })->setName('url_check_create');
-
 
 $app->run();
