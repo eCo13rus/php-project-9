@@ -29,7 +29,7 @@ final class Connection
 
             // Распарсиваем строку подключения на составляющие
             $username = $databaseUrl['user'] ?? null;
-            $password = urldecode($databaseUrl['pass'] ?? null);
+            $password = isset($databaseUrl['pass']) ? urldecode($databaseUrl['pass']) : null;
             $host = $databaseUrl['host'] ?? null;
             $port = $databaseUrl['port'] ?? null;
             $dbName = ltrim($databaseUrl['path'] ?? '', '/');

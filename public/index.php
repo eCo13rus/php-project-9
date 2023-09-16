@@ -109,7 +109,6 @@ $app->post('/urls', function ($request, $response) use ($router) {
             return $this->get('renderer')->render($response->withStatus(500), 'index.phtml', $params);
         }
     }
-
     // Отображение ошибок валидации
     $params = [
         'errors' => $validator->errors(),
@@ -121,7 +120,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
 
 
-// Маршрут для отображение списка всех URL-адресов
+// Маршрут для отображение списка всех URL-адресов проверенных
 $app->get('/urls', function ($request, $response) {
     $db = $this->get('db');
 
@@ -129,16 +128,27 @@ $app->get('/urls', function ($request, $response) {
         // SQL-запрос для получения данных URL и последней проверки (если она была проведена)
         // Используется LEFT JOIN для объединения таблиц urls и url_checks по полю id/ url_id
         $sql = "
-            SELECT urls.name, urls.id, MAX(url_checks.created_at) AS created_at, url_checks.status_code 
-            FROM urls 
-            LEFT JOIN url_checks ON urls.id = url_checks.url_id
-            GROUP BY (urls.name, urls.id, url_checks.status_code)
-            ORDER BY id DESC;
+            SELECT 
+            urls.name, 
+            urls.id, 
+            url_checks.created_at, 
+            url_checks.status_code 
+        FROM 
+            urls 
+        LEFT JOIN 
+            url_checks ON urls.id = url_checks.url_id 
+        WHERE 
+            url_checks.created_at = (SELECT MAX(created_at) FROM url_checks WHERE url_id = urls.id) 
+            OR url_checks.created_at IS NULL
+        GROUP BY 
+            (urls.name, urls.id, url_checks.created_at, url_checks.status_code)
+        ORDER BY 
+            id DESC;
         ";
         $statement = $db->query($sql);
 
         // Получение всех данных из базы данных
-        $urlsData = $statement->fetchAll();
+        $urlsData = $statement->fetchAll(\PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         // Логирование ошибки в случае неудачи
         error_log($e->getMessage());
