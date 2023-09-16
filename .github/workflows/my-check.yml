@@ -11,23 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: mbstring, intl, pdo_sqlite, mysqli, pdo_mysql, apcu
-      
-      - name: Copy .env file
-        run: |
-          echo "APP_ENV=development" >> .env
-          echo "PGUSER=eco13" >> .env
-          echo "PGPASSWORD=Horror4199/" >> .env
-          echo "PGHOST=localhost" >> .env
-          echo "PGPORT=5432" >> .env
-          echo "PGDATABASE=hexlet_development" >> .env
+      - name: Install
+        run: make install
 
-      - name: Install dependencies
-        run: composer install
-
-      - name: Run tests
-        run: make test
+      - name: Linter
+        run: make lint

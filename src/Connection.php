@@ -30,7 +30,6 @@ final class Connection
             $host = $_ENV['PGHOST'] ?? null;
             $port = $_ENV['PGPORT'] ?? null;
             $dbname = $_ENV['PGDATABASE'] ?? null;
-            var_dump($_ENV);
 
             // Проверяем наличие всех необходимых параметров для подключения к БД
             if (!$username || !$password || !$host || !$port || !$dbname) {
