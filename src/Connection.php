@@ -14,25 +14,32 @@ final class Connection
     public static function connect(): \PDO
     {
         try {
-            // Определяем путь к директории, где находится файл .env
+            // Определяем путь к директории, где находится файл database.ini
             $envPath = __DIR__ . '/../';
             
-            // Проверяем, доступен ли файл .env для чтения и загружаем переменные окружения из файла .env, если он доступен
-            $envFilePath = $envPath . '.env';
-            if (is_readable($envFilePath)) {
-                $dotenv = \Dotenv\Dotenv::createImmutable($envPath);
-                $dotenv->load();
+            // Загружаем параметры подключения из файла database.ini
+            $iniFilePath = $envPath . 'database.ini';
+            if (!is_readable($iniFilePath)) {
+                throw new \RuntimeException('Не удалось прочитать файл database.ini');
             }
 
-            // Получаем параметры подключения из переменных окружения
-            $username = $_ENV['PGUSER'] ?? null;
-            $password = $_ENV['PGPASSWORD'] ?? null;
-            $host = $_ENV['PGHOST'] ?? null;
-            $port = $_ENV['PGPORT'] ?? null;
-            $dbname = $_ENV['PGDATABASE'] ?? null;
+            $config = parse_ini_file($iniFilePath, true);
+            $env = $_ENV['APP_ENV'] ?? 'development';
+
+            if (!isset($config[$env])) {
+                throw new \RuntimeException("Конфигурация для среды '{$env}' не найдена в файле database.ini");
+            }
+
+            $dbConfig = $config[$env];
+
+            $host = $dbConfig['host'] ?? null;
+            $port = $dbConfig['port'] ?? null;
+            $dbname = $dbConfig['database'] ?? null;
+            $username = $dbConfig['user'] ?? null;
+            $password = $dbConfig['password'] ?? null;
 
             // Проверяем наличие всех необходимых параметров для подключения к БД
-            if (!$username || !$password || !$host || !$port || !$dbname) {
+            if (!$host || !$port || !$dbname || !$username || !$password) {
                 throw new \RuntimeException('Не удалось получить данные для подключения к БД');
             }
 
@@ -43,7 +50,6 @@ final class Connection
             $pdo = new \PDO($conStr, $username, $password);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             return $pdo;
-
 
         } catch (\Exception $e) {
             error_log($e->getMessage());
