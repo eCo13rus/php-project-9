@@ -17,7 +17,7 @@ class DbTableCreator
             if ($data === false) {
                 throw new \RuntimeException('Не удалось считать файл database.sql');
             }
-            
+
             $pdo->exec($data);
         } catch (\Exception $e) {
             throw new \RuntimeException('Произошла ошибка: ' . $e->getMessage());
