@@ -27,7 +27,7 @@
 
 ### Project Installation:
 
-```sh
+
 git clone https://github.com/eCo13rus/php-project-9
 cd php-project-9
 
