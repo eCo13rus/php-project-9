@@ -1,4 +1,3 @@
 /vendor/
 .env
-database.ini
 error.log
