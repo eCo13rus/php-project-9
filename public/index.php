@@ -54,7 +54,7 @@ $app->get('/', function (Request $request, Response $response) {
 //Маршрут для добавление и проверки Url
 $app->post('/urls', function ($request, Response $response) use ($routeParser) {
     $db = $this->get('db');
-    
+
     $urlData = $request->getParsedBody()['url'] ?? null;
 
     if (empty($urlData['name'])) {
@@ -187,7 +187,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
         'flash' => $messages,
         'checks' => $urlChecks
     ];
-    
+
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('url');
 
