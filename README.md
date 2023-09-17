@@ -18,7 +18,7 @@
 
 - PHP 8.0
 - Slim Framework 4
-- PostgreSql
+- PostgreSQL
 
 ## Installation Requirements:
 
