@@ -14,7 +14,7 @@ class DbTableCreator
     {
         try {
             $sqlFilePath = __DIR__ . '/../database.sql';
-            
+
             $sqlQueries = file_get_contents($sqlFilePath);
             if ($sqlQueries === false) {
                 throw new \RuntimeException('Не удалось считать файл ' . $sqlFilePath);

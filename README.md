@@ -28,16 +28,16 @@
 ### Project Installation:
 
 
-git clone https://github.com/eCo13rus/php-project-9
-cd php-project-9
+- git clone https://github.com/eCo13rus/php-project-9
 
+- cd php-project-9
 
 - make install
 
-# Start 
+## Start 
 
 - make start
 
-# Demonstration:
+## Demonstration:
 
 [Page Analyzer](https://php-project-9-production-84d8.up.railway.app/)
