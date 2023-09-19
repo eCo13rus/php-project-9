@@ -254,7 +254,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
     } catch (Exception $e) {
         $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
     }
-    
+
     return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
 })->setName('url_check_create');
 
