@@ -27,9 +27,9 @@
             </div>
         </nav>
         <?php if (count($flash) > 0): ?>
-            <?php foreach ($flash as $messages) : ?>
+            <?php foreach ($flash as $type => $messages) : ?>
                 <?php foreach ($messages as $message) : ?>
-                    <div class="alert alert-success" role="alert">
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : ($type === 'warning' ? 'warning' : 'success') ?>" role="alert">
                         <?= htmlspecialchars($message) ?>
                     </div>
                 <?php endforeach ?>

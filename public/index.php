@@ -65,6 +65,8 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
         return $this->get('renderer')->render($response->withStatus(422), 'index.phtml', $params);
     }
 
+    $urlData['name'] = strtolower($urlData['name']);
+
     $validator = new Validator($urlData);
     $validator->rule('lengthMax', 'name', 255)->message('URL слишком длинный');
     $validator->rule('url', 'name')->message('Некорректный URL');
@@ -213,35 +215,48 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
 
     try {
         $client = new Client();
-        $responseFromUrl = $client->request('GET', $urlToCheck);
+        try {
+            // Пытаемся выполнить GET запрос к URL
+            $responseFromUrl = $client->request('GET', $urlToCheck);
+        } catch (RequestException $e) {
+            // Если возникла ошибка, получаем ответ от сервера, если он есть
+            $responseFromUrl = $e->getResponse();
 
+            if (is_null($responseFromUrl)) {
+                // Если ответа нет, добавляем сообщение об ошибке и перенаправляем пользователя
+                $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
+                return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
+            }
+        }
+
+        // Получаем статус код, тело ответа и анализируем содержимое страницы
         $statusCode = $responseFromUrl->getStatusCode();
         $body = (string)$responseFromUrl->getBody();
-
         $document = new Document($body);
         $h1 = getTagContent($document, 'h1');
         $title = getTagContent($document, 'title');
         $description = getTagContent($document, 'meta[name=description]', 'content');
 
-        // Сохраняем результаты SEO анализа в базу данных
         $insertCheckStmt->execute([
             'url_id' => $id,
             'status_code' => $statusCode,
             'h1' => $h1,
             'title' => $title,
-            'description' => $description,
+            'description' => $description ?? null,
             'created_at' => Carbon::now()->toDateTimeString(),
         ]);
 
-        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
-    } catch (RequestException $e) {
-        $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
-        return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
+        if ($statusCode >= 400) {
+            $this->get('flash')->addMessage('warning', 'Проверка была выполнена успешно, но сервер ответил с ошибкой');
+        } else {
+            $this->get('flash')->addMessage('success', 'Страница успешно проверена');
+        }
     } catch (Exception $e) {
         $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
     }
-
+    
     return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
 })->setName('url_check_create');
+
 
 $app->run();
