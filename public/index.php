@@ -252,7 +252,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             $this->get('flash')->addMessage('success', 'Страница успешно проверена');
         }
     } catch (Exception $e) {
-        $this->get('flash')->addMessage('error', 'Неожиданная ошибка: ' . $e->getMessage());
+        $this->get('flash')->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
     }
 
     return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
