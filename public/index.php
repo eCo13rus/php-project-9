@@ -164,7 +164,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $db = $this->get('db');
 
     try {
-        $statement = $db->prepare('SELECT * FROM urls WHERE id = :id');
+        $statement = $db->prepare('SELECT id, name, created_at AT TIME ZONE \'UTC\' AT TIME ZONE \'Europe/Moscow\' as created_at FROM urls WHERE id = :id');
         $statement->bindParam(':id', $id, PDO::PARAM_INT);
         $statement->execute();
         $url = $statement->fetch();
@@ -174,7 +174,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
             return $response->withStatus(404);
         }
 
-        $statement = $db->prepare('SELECT * FROM url_checks WHERE url_id = :url_id ORDER BY id DESC');
+        $statement = $db->prepare('SELECT *, created_at AT TIME ZONE \'UTC\' AT TIME ZONE \'Europe/Moscow\' as created_at FROM url_checks WHERE url_id = :url_id ORDER BY id DESC');
         $statement->bindParam(':url_id', $id, PDO::PARAM_INT);
         $statement->execute();
         $urlChecks = $statement->fetchAll();
