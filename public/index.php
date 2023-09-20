@@ -97,7 +97,7 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             $statement = $db->prepare('INSERT INTO urls (name, created_at) VALUES (:name, :created_at)');
             $statement->execute([
                 'name' => $url,
-                'created_at' => Carbon::now()
+                'created_at' => Carbon::now(new \DateTimeZone('Europe/Moscow'))->toDateTimeString(),
             ]);
 
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
