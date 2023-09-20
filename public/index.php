@@ -231,7 +231,6 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             }
         }
 
-        // Получаем статус код, тело ответа и анализируем содержимое страницы
         $statusCode = $responseFromUrl->getStatusCode();
         $body = (string)$responseFromUrl->getBody();
         $document = new Document($body);
