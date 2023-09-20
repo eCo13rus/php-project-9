@@ -46,6 +46,8 @@ final class Connection
             $pdo = new \PDO($dsn, $username, $password);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
+            $pdo->exec("SET TIME ZONE 'Europe/Moscow';");
+
             return $pdo;
         } catch (\Exception $e) {
             error_log($e->getMessage());
