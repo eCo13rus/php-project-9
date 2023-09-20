@@ -258,5 +258,4 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
     return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
 })->setName('url_check_create');
 
-
 $app->run();
