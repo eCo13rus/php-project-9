@@ -19,6 +19,8 @@ use GuzzleHttp\Exception\RequestException;
 
 session_start();
 
+date_default_timezone_set('Europe/Moscow');
+
 ini_set('error_log', __DIR__ . '/error.log');
 
 $container = new Container();
@@ -243,7 +245,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             'h1' => $h1,
             'title' => $title,
             'description' => $description ?? null,
-            'created_at' => Carbon::now()->toDateTimeString(),
+            'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow'))->format('Y-m-d H:i:s'),
         ]);
 
         if ($statusCode >= 400) {
