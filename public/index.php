@@ -13,6 +13,7 @@ use Hexlet\Code\Connection;
 use Hexlet\Code\DbTableCreator ;
 use Valitron\Validator;
 use Carbon\Carbon;
+use DateTimeZone;
 use DiDom\Document;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -97,7 +98,7 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             $statement = $db->prepare('INSERT INTO urls (name, created_at) VALUES (:name, :created_at)');
             $statement->execute([
                 'name' => $url,
-                'created_at' => Carbon::now(new \DateTimeZone('Europe/Moscow'))->toDateTimeString(),
+                'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow')),
             ]);
 
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
@@ -164,7 +165,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $db = $this->get('db');
 
     try {
-        $statement = $db->prepare('SELECT id, name, created_at AT TIME ZONE \'UTC\' AT TIME ZONE \'Europe/Moscow\' as created_at FROM urls WHERE id = :id');
+        $statement = $db->prepare('SELECT * FROM urls WHERE id = :id');
         $statement->bindParam(':id', $id, PDO::PARAM_INT);
         $statement->execute();
         $url = $statement->fetch();
@@ -174,7 +175,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
             return $response->withStatus(404);
         }
 
-        $statement = $db->prepare('SELECT *, created_at AT TIME ZONE \'UTC\' AT TIME ZONE \'Europe/Moscow\' as created_at FROM url_checks WHERE url_id = :url_id ORDER BY id DESC');
+        $statement = $db->prepare('SELECT * FROM url_checks WHERE url_id = :url_id ORDER BY id DESC');
         $statement->bindParam(':url_id', $id, PDO::PARAM_INT);
         $statement->execute();
         $urlChecks = $statement->fetchAll();
@@ -244,7 +245,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             'h1' => $h1,
             'title' => $title,
             'description' => $description ?? null,
-            'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow'))->format('Y-m-d H:i:s'),
+            'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow')),
         ]);
 
         if ($statusCode >= 400) {
