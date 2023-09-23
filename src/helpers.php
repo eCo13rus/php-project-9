@@ -1,5 +1,7 @@
 <?php
 
+namespace Helpers;
+
 use DiDom\Document;
 
 function getTagContent(Document $document, string $tag, string $attribute = null): ?string

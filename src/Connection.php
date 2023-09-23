@@ -17,7 +17,8 @@ final class Connection
             // Определяем путь к директории, где находится файл .env
             $envPath = __DIR__ . '/../';
 
-            // Проверяем, доступен ли файл .env для чтения и загружаем переменные окружения из файла .env, если он доступен
+            // Проверяем, доступен ли файл .env для чтения и загружаем переменные окружения из файла .env,
+            // если он доступен
             $envFilePath = $envPath . '.env';
             if (is_readable($envFilePath)) {
                 $dotenv = \Dotenv\Dotenv::createImmutable($envPath);

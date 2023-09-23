@@ -1,32 +1,27 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/helpers.php';
 
+use function Helpers\getTagContent;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\PhpRenderer;
 use Slim\Flash\Messages;
-use DI\Container;
-use Hexlet\Code\Connection;
-use Hexlet\Code\DbTableCreator ;
 use Valitron\Validator;
 use Carbon\Carbon;
-use DateTimeZone;
 use DiDom\Document;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
 session_start();
 
-date_default_timezone_set('Europe/Moscow');
-
 ini_set('error_log', __DIR__ . '/error.log');
 
-$container = new Container();
+// Подключение и инициализация DI-контейнера из файла container.php
+$container = require_once __DIR__ . '/../container.php';
 
-// Регистрация сервисов
+// Регистрация дополнительных сервисов
 $container->set('renderer', function () {
     return new PhpRenderer(__DIR__ . '/../templates');
 });
@@ -35,22 +30,19 @@ $container->set('flash', function () {
     return new Messages();
 });
 
-$container->set('db', function () {
-    return Connection::connect();
-});
-
-// Создание приложения
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
 $routeParser = $app->getRouteCollector()->getRouteParser();
 
-DbTableCreator::createTables($container->get('db'));
-
 // Главная
-$app->get('/', function (Request $request, Response $response) {
-    return $this->get('renderer')->render($response, 'index.phtml');
+$app->get('/', function (Request $request, Response $response) use ($routeParser) {
+    $params = [
+        'routeParser' => $routeParser
+    ];
+    return $this->get('renderer')->render($response, 'index.phtml', $params);
 })->setName('main');
+
 
 
 
@@ -98,26 +90,26 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             $statement = $db->prepare('INSERT INTO urls (name, created_at) VALUES (:name, :created_at)');
             $statement->execute([
                 'name' => $url,
-                'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow')),
+                'created_at' => Carbon::now(),
             ]);
 
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
             $existingUrlId = $db->lastInsertId();
         }
 
-        $urlRoute = $routeParser->urlFor('url', ['id' => $existingUrlId]);
+        $urlRoute = $routeParser->urlFor('urls.store', ['id' => $existingUrlId]);
         return $response->withHeader('Location', $urlRoute)->withStatus(302);
     } catch (PDOException $e) {
         error_log($e->getMessage());
         $params = ['error' => 'Произошла ошибка при работе с базой данных.'];
         return $this->get('renderer')->render($response->withStatus(500), 'index.phtml', $params);
     }
-})->setName('add_url');
+})->setName('urls.store');
 
 
 
 // Маршрут для отображения списка всех URL-адресов с датой последней проверки (если она была проведена)
-$app->get('/urls', function ($request, Response $response) {
+$app->get('/urls', function ($request, Response $response) use ($routeParser) {
     $db = $this->get('db');
 
     try {
@@ -152,15 +144,15 @@ $app->get('/urls', function ($request, Response $response) {
         return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
     }
 
-    $params = $urlsDataArray ? ['urls' => $urlsDataArray] : ['message' => 'Нет данных для отображения'];
-
+    $params = $urlsDataArray ? ['urls' => $urlsDataArray, 'routeParser' => $routeParser] : ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser];
+    
     return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
-})->setName('urls');
+})->setName('urls.index');
 
 
 
 // Обработчик маршрута для отображения детальной информации о URL по его ID.
-$app->get('/urls/{id}', function (Request $request, Response $response, array $args) {
+$app->get('/urls/{id}', function (Request $request, Response $response, array $args) use ($routeParser) {
     $id = (int)$args['id'];
     $db = $this->get('db');
 
@@ -190,16 +182,18 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $params = [
         'url' => $url,
         'flash' => $messages,
-        'checks' => $urlChecks
+        'checks' => $urlChecks,
+        'routeParser' => $routeParser
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
-})->setName('url');
+})->setName('urls.show');
 
 
 
 // Обработчик POST-запроса для создания новой проверки URL.
 $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($routeParser) {
+    
     $id = (int)$args['url_id'];
     $db = $this->get('db');
 
@@ -245,7 +239,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
             'h1' => $h1,
             'title' => $title,
             'description' => $description ?? null,
-            'created_at' => Carbon::now(new DateTimeZone('Europe/Moscow')),
+            'created_at' => Carbon::now(),
         ]);
 
         if ($statusCode >= 400) {
@@ -257,7 +251,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         $this->get('flash')->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
     }
 
-    return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
-})->setName('url_check_create');
+    return $response->withRedirect($routeParser->urlFor('urls.show', ['id' => $id]));
+})->setName('urls.checks');
 
 $app->run();
