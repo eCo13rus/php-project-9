@@ -253,7 +253,7 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
         $this->get('flash')->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
     }
 
-    return $response->withRedirect($routeParser->urlFor('urls.show', ['id' => $id]));
+    return $response->withRedirect($routeParser->urlFor('urls.show', ['id' => (string)$id]));
 })->setName('urls.checks');
 
 $app->run();
