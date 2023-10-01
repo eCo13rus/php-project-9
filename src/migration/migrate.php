@@ -6,5 +6,11 @@ $container = require_once __DIR__ . '/../../container.php';
 
 use Hexlet\Code\DbTableCreator;
 
-// Запуск миграций
-DbTableCreator::createTables($container->get('db'));
+try {
+    // Запуск миграций
+    DbTableCreator::createTables($container->get('db'));
+    echo "Миграции успешно выполнены.\n";
+} catch (Exception $e) {
+    echo "Произошла ошибка при выполнении миграций: " . $e->getMessage() . "\n";
+}
+

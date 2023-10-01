@@ -38,11 +38,10 @@ $routeParser = $app->getRouteCollector()->getRouteParser();
 // Главная
 $app->get('/', function (Request $request, Response $response) use ($routeParser) {
     $params = [
-        'routeParser' => $routeParser
+        'routeParser' => $routeParser,
     ];
     return $this->get('renderer')->render($response, 'index.phtml', $params);
 })->setName('main');
-
 
 
 
@@ -55,7 +54,8 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
     if (empty($urlData['name'])) {
         $params = [
             'errors' => ['name' => ['URL не должен быть пустым']],
-            'url' => ''
+            'url' => '',
+            'routeParser' => $routeParser
         ];
         return $this->get('renderer')->render($response->withStatus(422), 'index.phtml', $params);
     }
@@ -71,6 +71,7 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             'errors' => $validator->errors(),
             'url' => $urlData['name'] ?? '',
             'flashMessages' => $this->get('flash')->getMessages(),
+            'routeParser' => $routeParser
         ];
         return $this->get('renderer')->render($response->withStatus(422), 'index.phtml', $params);
     }
@@ -97,7 +98,7 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             $existingUrlId = $db->lastInsertId();
         }
 
-        $urlRoute = $routeParser->urlFor('urls.store', ['id' => $existingUrlId]);
+        $urlRoute = $routeParser->urlFor('urls.show', ['id' => $existingUrlId]);
         return $response->withHeader('Location', $urlRoute)->withStatus(302);
     } catch (PDOException $e) {
         error_log($e->getMessage());
@@ -144,8 +145,9 @@ $app->get('/urls', function ($request, Response $response) use ($routeParser) {
         return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
     }
 
-    $params = $urlsDataArray ? ['urls' => $urlsDataArray, 'routeParser' => $routeParser] : ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser];
-    
+    $params = $urlsDataArray ? ['urls' => $urlsDataArray, 'routeParser' => $routeParser] :
+        ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser];
+
     return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
 })->setName('urls.index');
 
@@ -193,7 +195,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
 
 // Обработчик POST-запроса для создания новой проверки URL.
 $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) use ($routeParser) {
-    
+
     $id = (int)$args['url_id'];
     $db = $this->get('db');
 
