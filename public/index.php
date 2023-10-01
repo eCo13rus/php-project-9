@@ -19,7 +19,7 @@ session_start();
 ini_set('error_log', __DIR__ . '/error.log');
 
 // Подключение и инициализация DI-контейнера из файла container.php
-$container = require_once __DIR__ . '/../container.php';
+$container = require_once __DIR__ . '/../src/container.php';
 
 // Регистрация дополнительных сервисов
 $container->set('renderer', function () {

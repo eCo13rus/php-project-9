@@ -10,4 +10,3 @@ $container->set('db', function () {
 });
 
 return $container;
-

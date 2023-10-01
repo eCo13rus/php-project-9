@@ -13,4 +13,3 @@ try {
 } catch (Exception $e) {
     echo "Произошла ошибка при выполнении миграций: " . $e->getMessage() . "\n";
 }
-
