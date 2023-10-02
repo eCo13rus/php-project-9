@@ -1,78 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Анализатор страниц помогает быстро и бесплатно проверить сайты на SEO-пригодность. Начните анализ уже сегодня!">
-    <title>Анализатор страниц</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
-</head>
+<main class="flex-grow-1">
+    <div class="container-lg mt-3">
+        <h1>Сайты</h1>
 
-<body class="min-vh-100 d-flex flex-column">
-    <header class="flex-shrink-0">
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark px-3">
-            <a class="navbar-brand" href="<?= $routeParser->urlFor('main') ?>">Анализатор страниц</a>
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="<?= $routeParser->urlFor('main') ?>">Главная</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="<?= $routeParser->urlFor('urls.index') ?>">Сайты</a>
-                </li>
-            </ul>
-        </nav>
-    </header>
-
-    <main class="flex-grow-1">
-        <div class="container-lg mt-3">
-            <h1>Сайты</h1>
-
-            <?php if (isset($error)): ?>
-                <div class="alert alert-danger" role="alert">
-                    <?= htmlspecialchars($error) ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (isset($message)): ?>
-                <div class="alert alert-info" role="alert">
-                    <?= htmlspecialchars($message) ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (isset($urls) && count($urls) > 0): ?>
-                <table class="table table-bordered table-hover text-nowrap" data-test="urls">
-                    <tbody>
-                        <tr>
-                            <th>ID</th>
-                            <th>Имя</th>
-                            <th>Последняя проверка</th>
-                            <th>Код ответа</th>
-                        </tr>
-                        <?php foreach($urls as $url): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($url['id']) ?></td>
-                                <td>
-                                    <a href="<?= $routeParser->urlFor('urls.show', ['id' => htmlspecialchars($url['id'])]) ?>"><?= htmlspecialchars($url['name']) ?></a>
-                                </td>
-                                <td><?= htmlspecialchars($url['created_at'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($url['status_code'] ?? '') ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-        </div>
-    </main>
-
-    <footer class="border-top py-3 mt-5 flex-shrink-0">
-        <div class="container-lg">
-            <div class="text-center">
-                <a href="https://hh.ru/resume/1d1ee09cff0b3781950039ed1f30584e653070?hhtmFrom=resume_list" target="_blank">Илья Игоревич</a>
+        <?php if (isset($error)) : ?>
+            <div class="alert alert-danger" role="alert">
+                <?= htmlspecialchars($error) ?>
             </div>
-        </div>
-    </footer>
-</body>
-</html>
+        <?php endif; ?>
 
+        <?php if (isset($message)) : ?>
+            <div class="alert alert-info" role="alert">
+                <?= htmlspecialchars($message) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($urls) && count($urls) > 0) : ?>
+            <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+                <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Последняя проверка</th>
+                        <th>Код ответа</th>
+                    </tr>
+                    <?php foreach ($urls as $url) : ?>
+                        <tr>
+                            <td><?= htmlspecialchars($url['id']) ?></td>
+                            <td>
+                                <a href="<?= $routeParser->urlFor('urls.show', ['id' => htmlspecialchars($url['id'])]) ?>"><?= htmlspecialchars($url['name']) ?></a>
+                            </td>
+                            <td><?= htmlspecialchars($url['created_at'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($url['status_code'] ?? '') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+</main>

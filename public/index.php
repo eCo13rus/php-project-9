@@ -40,7 +40,8 @@ $app->get('/', function (Request $request, Response $response) use ($routeParser
     $params = [
         'routeParser' => $routeParser,
     ];
-    return $this->get('renderer')->render($response, 'index.phtml', $params);
+    $content = $this->get('renderer')->fetch('index.phtml', $params);
+    return $this->get('renderer')->render($response, 'layout.phtml', ['content' => $content] + $params);
 })->setName('main');
 
 
@@ -57,7 +58,12 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             'url' => '',
             'routeParser' => $routeParser
         ];
-        return $this->get('renderer')->render($response->withStatus(422), 'index.phtml', $params);
+        $content = $this->get('renderer')->fetch('index.phtml', $params);
+        return $this->get('renderer')->render(
+            $response->withStatus(422),
+            'layout.phtml',
+            ['content' => $content] + $params
+        );
     }
 
     $urlData['name'] = strtolower($urlData['name']);
@@ -73,7 +79,12 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
             'flashMessages' => $this->get('flash')->getMessages(),
             'routeParser' => $routeParser
         ];
-        return $this->get('renderer')->render($response->withStatus(422), 'index.phtml', $params);
+        $content = $this->get('renderer')->fetch('index.phtml', $params);
+        return $this->get('renderer')->render(
+            $response->withStatus(422),
+            'layout.phtml',
+            ['content' => $content] + $params
+        );
     }
 
     $parsedUrl = parse_url($urlData['name']);
@@ -102,8 +113,15 @@ $app->post('/urls', function ($request, Response $response) use ($routeParser) {
         return $response->withHeader('Location', $urlRoute)->withStatus(302);
     } catch (PDOException $e) {
         error_log($e->getMessage());
-        $params = ['error' => 'Произошла ошибка при работе с базой данных.'];
-        return $this->get('renderer')->render($response->withStatus(500), 'index.phtml', $params);
+        $params = ['error' => 'Произошла ошибка при работе с базой данных.', 'routeParser' => $routeParser];
+
+        $content = $this->get('renderer')->fetch('show.phtml', $params);
+
+        return $this->get('renderer')->render(
+            $response->withStatus(500),
+            'layout.phtml',
+            ['content' => $content] + $params
+        );
     }
 })->setName('urls.store');
 
@@ -148,7 +166,14 @@ $app->get('/urls', function ($request, Response $response) use ($routeParser) {
     $params = $urlsDataArray ? ['urls' => $urlsDataArray, 'routeParser' => $routeParser] :
         ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser];
 
-    return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
+    $content = $this->get('renderer')->fetch('urls/show_urls.phtml', $params);
+
+    // Затем вставляем его в общий шаблон
+    return $this->get('renderer')->render(
+        $response,
+        'layout.phtml',
+        ['content' => $content] + $params
+    );
 })->setName('urls.index');
 
 
@@ -187,8 +212,13 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
         'checks' => $urlChecks,
         'routeParser' => $routeParser
     ];
+    $content = $this->get('renderer')->fetch('urls/show.phtml', $params);
 
-    return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
+    return $this->get('renderer')->render(
+        $response,
+        'layout.phtml',
+        ['content' => $content] + $params
+    );
 })->setName('urls.show');
 
 
