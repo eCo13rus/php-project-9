@@ -11,6 +11,7 @@ use Slim\Flash\Messages;
 use Valitron\Validator;
 use Carbon\Carbon;
 use DiDom\Document;
+use FastRoute\Route;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -39,6 +40,7 @@ $routeParser = $app->getRouteCollector()->getRouteParser();
 $app->get('/', function (Request $request, Response $response) use ($routeParser) {
     $params = [
         'routeParser' => $routeParser,
+        'currentRoute' => 'main'
     ];
     $content = $this->get('renderer')->fetch('index.phtml', $params);
     return $this->get('renderer')->render($response, 'layout.phtml', ['content' => $content] + $params);
@@ -163,12 +165,14 @@ $app->get('/urls', function ($request, Response $response) use ($routeParser) {
         return $this->get('renderer')->render($response, 'urls/show_urls.phtml', $params);
     }
 
-    $params = $urlsDataArray ? ['urls' => $urlsDataArray, 'routeParser' => $routeParser] :
-        ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser];
+    $params = $urlsDataArray ? [
+        'urls' => $urlsDataArray, 'routeParser' => $routeParser,
+        'currentRoute' => 'urls.index'
+    ] :
+        ['message' => 'Нет данных для отображения', 'routeParser' => $routeParser, 'currentRoute' => 'urls.index'];
 
     $content = $this->get('renderer')->fetch('urls/show_urls.phtml', $params);
 
-    // Затем вставляем его в общий шаблон
     return $this->get('renderer')->render(
         $response,
         'layout.phtml',
@@ -245,21 +249,29 @@ $app->post('/urls/{url_id}/checks', function ($request, $response, array $args) 
     try {
         $client = new Client();
         try {
-            // Пытаемся выполнить GET запрос к URL
             $responseFromUrl = $client->request('GET', $urlToCheck);
         } catch (RequestException $e) {
-            // Если возникла ошибка, получаем ответ от сервера, если он есть
             $responseFromUrl = $e->getResponse();
-
             if (is_null($responseFromUrl)) {
-                // Если ответа нет, добавляем сообщение об ошибке и перенаправляем пользователя
                 $this->get('flash')->addMessage('error', 'Ошибка при проверке страницы: ' . $e->getMessage());
                 return $response->withRedirect($routeParser->urlFor('url', ['id' => (string) $id]));
             }
         }
 
         $statusCode = $responseFromUrl->getStatusCode();
+
+        if ($statusCode === 500) {
+            $params = ['errorMessage' => 'Ошибка 500. Что-то пошло не так.'];
+            $content = $this->get('renderer')->fetch('urls/error.phtml', $params);
+            return $this->get('renderer')->render($response, 'layout.phtml', ['content' => $content] + $params);
+        }
+
         $body = (string)$responseFromUrl->getBody();
+        if (empty($body)) {
+            $this->get('flash')->addMessage('error', 'Получен пустой ответ от сервера');
+            return $response->withRedirect($routeParser->urlFor('urls.show', ['id' => (string)$id]));
+        }
+
         $document = new Document($body);
         $h1 = getTagContent($document, 'h1');
         $title = getTagContent($document, 'title');
