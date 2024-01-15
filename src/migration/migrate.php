@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$container = require_once __DIR__ . '/../../container.php';
+$container = require_once __DIR__ . '/../container.php';
 
 use Hexlet\Code\DbTableCreator;
 
